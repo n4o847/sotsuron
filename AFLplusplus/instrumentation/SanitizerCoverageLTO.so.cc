@@ -56,6 +56,8 @@
 #include "debug.h"
 #include "afl-llvm-common.h"
 
+#include "aflv.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "sancov"
@@ -253,6 +255,8 @@ class ModuleSanitizerCoverage {
   FILE *                           documentFile = NULL;
   size_t                           found = 0;
   // afl++ END
+
+  AFLVBuilder                      AFLVB;
 
 };
 
@@ -981,6 +985,19 @@ bool ModuleSanitizerCoverage::instrumentModule(
 
   }
 
+  if ((ptr = getenv("AFLV_PROFILE")) != NULL) {
+
+    std::error_code ec;
+    raw_fd_ostream file(StringRef(ptr), ec);
+
+    AFLVB.print(file);
+
+    if (ec.value()) {
+      std::cerr << ec.message() << std::endl;
+    }
+
+  }
+
   if (!getenv("AFL_LLVM_LTO_DONTWRITEID") || dictionary.size() || map_addr) {
 
     // yes we could create our own function, insert it into ctors ...
@@ -1488,6 +1505,8 @@ void ModuleSanitizerCoverage::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
               F.getName().str().c_str(), afl_global_id);
 
     }
+
+    AFLVB.addBasicBlock(BB, afl_global_id);
 
     /* Set the ID of the inserted basic block */
 

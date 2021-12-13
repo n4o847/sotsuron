@@ -384,6 +384,9 @@ endif
 instrumentation/afl-llvm-common.o: instrumentation/afl-llvm-common.cc instrumentation/afl-llvm-common.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) `$(LLVM_CONFIG) --cxxflags` -fno-rtti -fPIC -std=$(LLVM_STDCXX) -c $< -o $@ 
 
+instrumentation/aflv.o: instrumentation/aflv.cc instrumentation/aflv.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) `$(LLVM_CONFIG) --cxxflags` -fno-rtti -fPIC -std=$(LLVM_STDCXX) -c $< -o $@ 
+
 ./afl-llvm-pass.so: instrumentation/afl-llvm-pass.so.cc instrumentation/afl-llvm-common.o | test_deps
 ifeq "$(LLVM_MIN_4_0_1)" "0"
 	$(info [!] N-gram branch coverage instrumentation is not available for llvm version $(LLVMVER))
@@ -405,9 +408,9 @@ ifeq "$(LLVM_LTO)" "1"
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -o $@
 endif
 
-./SanitizerCoverageLTO.so: instrumentation/SanitizerCoverageLTO.so.cc
+./SanitizerCoverageLTO.so: instrumentation/SanitizerCoverageLTO.so.cc instrumentation/aflv.o
 ifeq "$(LLVM_LTO)" "1"
-	$(CXX) $(CLANG_CPPFL) -Wno-writable-strings -fno-rtti -fPIC -std=$(LLVM_STDCXX) -shared $< -o $@ $(CLANG_LFL) instrumentation/afl-llvm-common.o
+	$(CXX) $(CLANG_CPPFL) -Wno-writable-strings -fno-rtti -fPIC -std=$(LLVM_STDCXX) -shared $< -o $@ $(CLANG_LFL) instrumentation/afl-llvm-common.o instrumentation/aflv.o
 endif
 
 ./afl-llvm-lto-instrumentation.so: instrumentation/afl-llvm-lto-instrumentation.so.cc instrumentation/afl-llvm-common.o
