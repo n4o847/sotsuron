@@ -21,9 +21,8 @@ interface BlockFreq {
 
 function getCoverage(profile: Profile, blockFreq: BlockFreq) {
   const coverage = new Map<string, number>();
-  for (let i = 0; i < profile['basic_blocks'].length; i++) {
-    const block = profile['basic_blocks'][i];
-    const freq = blockFreq['freq'][i];
+  for (const block of profile['basic_blocks']) {
+    const freq = blockFreq['freq'][block.id];
     for (const inst of block['instructions']) {
       coverage.set(`${inst.filename}:${inst.line}`, freq);
     }
