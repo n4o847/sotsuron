@@ -63,7 +63,11 @@ function fuzz(argv: string[]) {
   inputDir = path.resolve(targetDir, inputDir);
   outputDir = path.resolve(targetDir, outputDir, `default`);
 
-  const fuzzer = spawn(path.join(AFLPP_DIR, 'afl-fuzz'), argv);
+  const fuzzer = spawn(path.join(AFLPP_DIR, 'afl-fuzz'), argv, {
+    env: {
+      AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: '1',
+    },
+  });
 
   fuzzer.stdout.on('data', (data) => {
     process.stdout.write(data);
