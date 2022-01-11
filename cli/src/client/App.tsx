@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { HashRouter, NavLink, Route, Switch } from 'react-router-dom';
 import StatsPage from './pages/Stats';
+import PlotPage from './pages/Plot';
 import QueuePage from './pages/Queue';
 import CrashesPage from './pages/Crashes';
 import ExplorerPage from './pages/Explorer';
@@ -22,6 +23,11 @@ export default function App() {
           <li className="nav-item">
             <NavLink to="/stats" className="nav-link" activeClassName="active">
               Stats
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/plot" className="nav-link" activeClassName="active">
+              Plot
             </NavLink>
           </li>
           <li className="nav-item">
@@ -52,6 +58,9 @@ export default function App() {
           <Switch>
             <Route path="/stats">
               <StatsPage />
+            </Route>
+            <Route path="/plot">
+              <PlotPage />
             </Route>
             <Route path="/queue">
               <QueuePage />
