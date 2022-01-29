@@ -1,6 +1,11 @@
 import path from 'path';
 import express from 'express';
 import fs from 'fs/promises';
+import webpack from 'webpack';
+import webpackDevMiddleware from 'webpack-dev-middleware';
+import webpackHotMiddleware from 'webpack-hot-middleware';
+// @ts-ignore
+import webpackClientConfig from '../../webpack.client.dev';
 
 interface ServeOptions {
   targetDir: string;
@@ -11,9 +16,17 @@ interface ServeOptions {
 export function serve({ targetDir, outputDir }: ServeOptions) {
   const app = express();
   const port = process.env.PORT || 3000;
-  const DIST_DIR = path.join(__dirname, '../../dist/client');
 
-  app.use(express.static(DIST_DIR));
+  if (process.env.NODE_ENV === 'development') {
+    const compiler = webpack(webpackClientConfig);
+    app.use(webpackDevMiddleware(compiler));
+    app.use(webpackHotMiddleware(compiler));
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const DIST_DIR = path.join(__dirname, '../../dist/client');
+    app.use(express.static(DIST_DIR));
+  }
 
   app.get(`/api/hello`, (req, res) => {
     res.json({ message: 'hello' });

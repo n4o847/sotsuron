@@ -1,8 +1,0 @@
-{
-  "exec": "webpack --config=webpack.client.config.js --mode=development && ts-node src/server/index.ts",
-  "watch": [
-    "src/client/",
-    "src/server/"
-  ],
-  "ext": "ts,tsx,js,jsx,html"
-}
