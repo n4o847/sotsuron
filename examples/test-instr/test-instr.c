@@ -1,1 +1,0 @@
-../../AFLplusplus/test-instr.c

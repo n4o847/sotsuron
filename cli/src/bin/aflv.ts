@@ -30,6 +30,7 @@ async function cc(argv: string[]) {
 
   const compiler = spawn(path.join(AFLPP_DIR, 'afl-clang-lto'), argv, {
     env: {
+      ...process.env,
       AFLV_PROFILE: path.resolve(targetDir, `.aflv/profile.json`),
     },
   });
@@ -65,6 +66,7 @@ function fuzz(argv: string[]) {
 
   const fuzzer = spawn(path.join(AFLPP_DIR, 'afl-fuzz'), argv, {
     env: {
+      ...process.env,
       AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: '1',
     },
   });
