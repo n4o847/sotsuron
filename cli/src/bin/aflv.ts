@@ -41,7 +41,7 @@ interface Instruction {
   file_id?: number;
 }
 
-async function cc(argv: string[]) {
+async function cc(argv: string[], options: Partial<{ cxx: boolean }> = {}) {
   const targetDir = process.cwd();
   const profilePath = path.resolve(targetDir, `.aflv/profile.json`);
 
@@ -54,12 +54,16 @@ async function cc(argv: string[]) {
   });
 
   await new Promise((resolve, reject) => {
-    const compiler = spawn(path.join(AFLPP_DIR, 'afl-clang-lto'), argv, {
-      env: {
-        ...process.env,
-        AFLV_PROFILE: profilePath,
-      },
-    });
+    const compiler = spawn(
+      path.join(AFLPP_DIR, options.cxx ? 'afl-clang-lto++' : 'afl-clang-lto'),
+      argv,
+      {
+        env: {
+          ...process.env,
+          AFLV_PROFILE: profilePath,
+        },
+      }
+    );
 
     compiler.stdout.pipe(process.stdout, { end: false });
     compiler.stderr.pipe(process.stderr, { end: false });
@@ -125,6 +129,8 @@ function filterFiles(profile: Profile): Profile {
       ...block,
       instructions: block['instructions'].filter(
         (inst) =>
+          // C++
+          !inst['filename'].startsWith('/usr/lib/gcc/') &&
           // Rust
           !inst['filename'].startsWith('/rustc/') &&
           // Crystal
@@ -179,6 +185,10 @@ async function main(argv: string[]) {
   switch (argv[0]) {
     case 'cc': {
       await cc(argv.slice(1));
+      break;
+    }
+    case 'cxx': {
+      await cc(argv.slice(1), { cxx: true });
       break;
     }
     case 'fuzz': {
