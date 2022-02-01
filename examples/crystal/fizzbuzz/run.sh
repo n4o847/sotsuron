@@ -9,7 +9,7 @@ echo "Compiling..."
 
 mkdir -p bitcode
 
-crystal build --emit llvm-ir src/main.cr
+crystal build -d --emit llvm-ir src/main.cr
 
 mv main.ll bitcode/main.ll
 
