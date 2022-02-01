@@ -17,8 +17,33 @@ function getArg(argv: string[], option: string): string | undefined {
   return argv[index + 1];
 }
 
+interface Profile {
+  files?: File[];
+  basic_blocks: BasicBlock[];
+}
+
+interface File {
+  id: number;
+  directory: string;
+  filename: string;
+  source?: string;
+}
+
+interface BasicBlock {
+  id: number;
+  instructions: Instruction[];
+}
+
+interface Instruction {
+  directory: string;
+  filename: string;
+  line: number;
+  file_id?: number;
+}
+
 async function cc(argv: string[]) {
   const targetDir = process.cwd();
+  const profilePath = path.resolve(targetDir, `.aflv/profile.json`);
 
   await fs.mkdir(path.resolve(targetDir, `.aflv`)).catch((err) => {
     if (err?.code === 'EEXIST') {
@@ -28,24 +53,67 @@ async function cc(argv: string[]) {
     }
   });
 
-  const compiler = spawn(path.join(AFLPP_DIR, 'afl-clang-lto'), argv, {
-    env: {
-      ...process.env,
-      AFLV_PROFILE: path.resolve(targetDir, `.aflv/profile.json`),
-    },
+  await new Promise((resolve, reject) => {
+    const compiler = spawn(path.join(AFLPP_DIR, 'afl-clang-lto'), argv, {
+      env: {
+        ...process.env,
+        AFLV_PROFILE: profilePath,
+      },
+    });
+
+    compiler.stdout.pipe(process.stdout, { end: false });
+    compiler.stderr.pipe(process.stderr, { end: false });
+
+    compiler.on('close', resolve);
   });
 
-  compiler.stdout.on('data', (data) => {
-    process.stdout.write(data);
-  });
+  await rewriteProfile(profilePath);
+}
 
-  compiler.stderr.on('data', (data) => {
-    process.stderr.write(data);
-  });
+async function rewriteProfile(profilePath: string) {
+  let profile = JSON.parse(
+    await fs.readFile(profilePath, { encoding: 'utf8' })
+  ) as Profile;
 
-  compiler.on('close', () => {
-    console.log('closed');
-  });
+  const fileMap = new Map<string, File>();
+
+  for (const block of profile['basic_blocks']) {
+    for (const inst of block['instructions']) {
+      const absolutePath = path.resolve(inst['directory'], inst['filename']);
+      let fileId: number;
+      if (!fileMap.has(absolutePath)) {
+        fileId = fileMap.size;
+        fileMap.set(absolutePath, {
+          id: fileId,
+          directory: inst['directory'],
+          filename: inst['filename'],
+        });
+      } else {
+        fileId = fileMap.get(absolutePath)!.id;
+      }
+      inst['file_id'] = fileId;
+    }
+  }
+
+  await Promise.all(
+    Array.from(fileMap.entries(), async ([absolutePath, file]) => {
+      await fs
+        .readFile(absolutePath, { encoding: 'utf8' })
+        .then((source) => {
+          file['source'] = source;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    })
+  );
+
+  profile = {
+    files: Array.from(fileMap.values()),
+    ...profile,
+  };
+
+  await fs.writeFile(profilePath, JSON.stringify(profile, null, 2) + '\n');
 }
 
 function fuzz(argv: string[]) {
