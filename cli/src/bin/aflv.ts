@@ -75,6 +75,8 @@ async function rewriteProfile(profilePath: string) {
     await fs.readFile(profilePath, { encoding: 'utf8' })
   ) as Profile;
 
+  profile = filterFiles(profile);
+
   const fileMap = new Map<string, File>();
 
   for (const block of profile['basic_blocks']) {
@@ -114,6 +116,23 @@ async function rewriteProfile(profilePath: string) {
   };
 
   await fs.writeFile(profilePath, JSON.stringify(profile, null, 2) + '\n');
+}
+
+function filterFiles(profile: Profile): Profile {
+  return {
+    ...profile,
+    basic_blocks: profile['basic_blocks'].map((block) => ({
+      ...block,
+      instructions: block['instructions'].filter(
+        (inst) =>
+          // Rust
+          !inst['filename'].startsWith('/rustc/') &&
+          // Crystal
+          !inst['directory'].startsWith('/usr/share/crystal/src') &&
+          !(inst['directory'] === '.' && inst['filename'] === '??')
+      ),
+    })),
+  };
 }
 
 function fuzz(argv: string[]) {
