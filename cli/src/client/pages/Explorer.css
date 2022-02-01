@@ -1,0 +1,25 @@
+.file-line-container {
+  width: 100%;
+}
+
+.line-success {
+  background-color: #ccffd8;
+}
+
+.line-danger {
+  background-color: #ffd7d5;
+}
+
+.file-line-number {
+  padding: 0 10px;
+  width: 1%;
+  min-width: 50px;
+  text-align: right;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.file-line-code {
+  padding: 0 10px;
+  white-space: pre;
+}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './Explorer.css';
 
 interface Profile {
   files: File[];
@@ -73,25 +74,45 @@ export default function ExplorerPage() {
   return (
     <>
       <h2>Explorer</h2>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>File</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from(fileMap.values(), (file) => (
+            <tr>
+              <td>{file.filename}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       {Array.from(fileMap.values(), (file) => (
         <div key={file.id}>
           <h4>{file.filename}</h4>
-          <pre>
-            {file.source?.split('\n').map((line, index) => (
-              <div
-                key={index}
-                style={
-                  coverage.has(`${file.id}:${index + 1}`)
-                    ? coverage.get(`${file.id}:${index + 1}`)! >= 1
-                      ? { backgroundColor: '#ccffd8' }
-                      : { backgroundColor: '#ffd7d5' }
-                    : {}
-                }
-              >
-                <code>{line}</code>
-              </div>
-            ))}
-          </pre>
+          <table className="file-line-container">
+            {file.source
+              ?.replace(/\n$/, '')
+              .split('\n')
+              .map((line, index) => (
+                <tr
+                  key={index}
+                  className={[
+                    ...(coverage.has(`${file.id}:${index + 1}`)
+                      ? coverage.get(`${file.id}:${index + 1}`)! >= 1
+                        ? ['line-success']
+                        : ['line-danger']
+                      : []),
+                  ].join(' ')}
+                >
+                  <td className="file-line-number">{index + 1}</td>
+                  <td className="file-line-code">
+                    <span className="font-monospace">{line}</span>
+                  </td>
+                </tr>
+              ))}
+          </table>
         </div>
       ))}
     </>
