@@ -2,6 +2,6 @@
 
 AFLV=aflv
 
-$AFLV cc main.c -o main
+$AFLV cc src/main.c -o main
 
 $AFLV fuzz -i in -o out -- ./main
