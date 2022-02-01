@@ -14,6 +14,7 @@ $ popd
 
 $ pushd cli
 $ npm install
+$ npm run build
 $ npm link
 $ popd
 ```

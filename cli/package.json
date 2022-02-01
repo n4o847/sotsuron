@@ -6,10 +6,10 @@
     "aflv": "dist/bin/aflv.js"
   },
   "scripts": {
-    "prepare": "npm run build:client && npm run build:server",
     "dev": "NODE_ENV=development nodemon src/server/index.ts",
     "dev:client": "webpack --config=webpack.client.config.js --mode=development",
     "dev:server": "webpack --config=webpack.server.config.js --mode=development",
+    "build": "npm run build:client && npm run build:server",
     "build:client": "webpack --config=webpack.client.config.js --mode=production",
     "build:server": "webpack --config=webpack.server.config.js --mode=production"
   },
