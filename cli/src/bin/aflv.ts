@@ -160,14 +160,20 @@ function fuzz(argv: string[]) {
   }
 
   inputDir = path.resolve(targetDir, inputDir);
-  outputDir = path.resolve(targetDir, outputDir, `default`);
+  outputDir = path.resolve(targetDir, outputDir);
 
-  const fuzzer = spawn(path.join(AFLPP_DIR, 'afl-fuzz'), argv, {
-    env: {
-      ...process.env,
-      AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: '1',
-    },
-  });
+  const userQueueDir = path.join(outputDir, `user`, `queue`);
+
+  const fuzzer = spawn(
+    path.join(AFLPP_DIR, 'afl-fuzz'),
+    ['-M', 'default', '-F', userQueueDir, ...argv],
+    {
+      env: {
+        ...process.env,
+        AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: '1',
+      },
+    }
+  );
 
   fuzzer.stdout.on('data', (data) => {
     process.stdout.write(data);

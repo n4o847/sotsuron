@@ -5,7 +5,10 @@ export default function CrashesPage() {
 
   useEffect(() => {
     const update = async () => {
-      const crashes = await fetch('/api/crashes').then((res) => res.json());
+      const crashes = (await fetch('/api/crashes').then((res) =>
+        res.json()
+      )) as any[];
+      crashes.reverse();
       console.log(crashes);
       setCrashes(crashes);
     };
@@ -20,8 +23,8 @@ export default function CrashesPage() {
       <ul className="list-group">
         {crashes.map((info) => (
           <li key={info.id} className="list-group-item">
-            {JSON.stringify({ ...info, base64: undefined })}
-            <pre>{atob(info.base64)}</pre>
+            <p>{info['filename']}</p>
+            <pre>{atob(info['base64'])}</pre>
           </li>
         ))}
       </ul>
