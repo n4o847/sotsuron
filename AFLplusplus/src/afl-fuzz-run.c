@@ -908,6 +908,24 @@ abort_trimming:
 
 }
 
+void write_virgin_bits(afl_state_t *afl) {
+
+  u8  fname[PATH_MAX];
+  s32 fd;
+
+  if (afl->stage_cur % afl->stats_update_freq) return;
+
+  snprintf(fname, PATH_MAX, "%s/virgin_bits", afl->out_dir);
+  fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, DEFAULT_PERMISSION);
+
+  if (fd < 0) { PFATAL("Unable to open '%s'", fname); }
+
+  ck_write(fd, afl->virgin_bits, afl->fsrv.map_size, fname);
+
+  close(fd);
+
+}
+
 /* Write a modified test case, run program, process results. Handle
    error conditions, returning 1 if it's time to bail out. This is
    a helper function for fuzz_one(). */
@@ -948,6 +966,8 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
     return 1;
 
   }
+
+  write_virgin_bits(afl);
 
   /* This handles FAULT_ERROR for us: */
 
