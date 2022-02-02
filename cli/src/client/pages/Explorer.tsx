@@ -25,16 +25,18 @@ interface Instruction {
   file_id: number;
 }
 
-interface BlockFreq {
-  freq: number[];
-}
-
-function getCoverage(profile: Profile, blockFreq: BlockFreq) {
+function getCoverage(profile: Profile, virginBits: ArrayBuffer) {
   const coverage = new Map<string, number>();
+  const bytes = new Uint8Array(virginBits);
   for (const block of profile['basic_blocks']) {
-    const freq = blockFreq['freq'][block.id];
+    const freq = bytes[block.id] === 255 ? 0 : 1;
     for (const inst of block['instructions']) {
-      coverage.set(`${inst['file_id']}:${inst['line']}`, freq);
+      const key = `${inst['file_id']}:${inst['line']}`;
+      if (coverage.has(key)) {
+        coverage.set(key, Math.min(coverage.get(key)!, freq));
+      } else {
+        coverage.set(key, freq);
+      }
     }
   }
   return coverage;
@@ -59,12 +61,12 @@ export default function ExplorerPage() {
         (res) => res.json()
       )) as Profile;
       console.log(profile);
-      const blockFreq = (await fetch('/api/output/block_freq.json').then(
-        (res) => res.json()
-      )) as BlockFreq;
+      const virginBits = await fetch('/api/output/virgin_bits').then((res) =>
+        res.arrayBuffer()
+      );
       setProfile(profile);
       setFileMap(getFiles(profile));
-      setCoverage(getCoverage(profile, blockFreq));
+      setCoverage(getCoverage(profile, virginBits));
     };
     const timer = setInterval(update, 5000);
     update();
