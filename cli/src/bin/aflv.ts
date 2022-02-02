@@ -75,9 +75,14 @@ async function cc(argv: string[], options: Partial<{ cxx: boolean }> = {}) {
 }
 
 async function rewriteProfile(profilePath: string) {
-  let profile = JSON.parse(
-    await fs.readFile(profilePath, { encoding: 'utf8' })
-  ) as Profile;
+  let profile: Profile;
+
+  try {
+    profile = JSON.parse(await fs.readFile(profilePath, { encoding: 'utf8' }));
+  } catch (e) {
+    console.error(e);
+    return;
+  }
 
   profile = filterFiles(profile);
 
