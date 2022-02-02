@@ -19,6 +19,11 @@ export function serve({ targetDir, outputDir }: ServeOptions) {
   const app = express();
   const port = process.env.PORT || 3000;
 
+  const cachedQueue = new CachedQueue(path.join(outputDir, `default`, `queue`));
+  const cachedCrashes = new CachedQueue(
+    path.join(outputDir, `default`, `crashes`)
+  );
+
   app.use(bodyParser.json());
 
   if (process.env.NODE_ENV === 'development') {
@@ -37,12 +42,12 @@ export function serve({ targetDir, outputDir }: ServeOptions) {
   });
 
   app.get(`/api/queue`, async (req, res) => {
-    const queue = await getQueue(path.join(outputDir, `default`, `queue`));
+    const queue = await cachedQueue.get();
     res.json(queue);
   });
 
   app.get(`/api/crashes`, async (req, res) => {
-    const crashes = await getQueue(path.join(outputDir, `default`, `crashes`));
+    const crashes = await cachedCrashes.get();
     res.json(crashes);
   });
 
@@ -51,7 +56,7 @@ export function serve({ targetDir, outputDir }: ServeOptions) {
       path.join(outputDir, `user`, `queue`),
       req.body['base64']
     );
-    const queue = await getQueue(path.join(outputDir, `default`, `queue`));
+    const queue = await cachedQueue.get();
     res.json(queue);
   });
 
@@ -67,25 +72,38 @@ export function serve({ targetDir, outputDir }: ServeOptions) {
   });
 }
 
-async function getQueue(
-  queueDir: string
-): Promise<{ filename: string; base64: string }[]> {
-  const directory = await fs.readdir(queueDir);
-  const queue = directory.filter((filename) => !filename.startsWith(`.`));
-  const contents = await Promise.all(
-    queue.map((filename) =>
-      fs.readFile(path.join(queueDir, filename), {
-        encoding: 'base64',
-      })
-    )
-  );
-  const data = queue.map((filename, i) => {
-    return {
-      filename,
-      base64: contents[i],
-    };
-  });
-  return data;
+interface QueueItem {
+  filename: string;
+  base64: string;
+}
+
+class CachedQueue {
+  private dir: string;
+  private cache: Map<string, QueueItem>;
+
+  constructor(dir: string) {
+    this.dir = dir;
+    this.cache = new Map();
+  }
+
+  async get(): Promise<QueueItem[]> {
+    const directory = await fs.readdir(this.dir);
+    const queue = directory.filter((filename) => !filename.startsWith(`.`));
+    const data = await Promise.all(
+      queue.map(
+        (filename) =>
+          this.cache.get(filename) ??
+          fs
+            .readFile(path.join(this.dir, filename), { encoding: 'base64' })
+            .then((content) => {
+              const item: QueueItem = { filename, base64: content };
+              this.cache.set(filename, item);
+              return item;
+            })
+      )
+    );
+    return data;
+  }
 }
 
 async function addToUserQueue(userQueueDir: string, base64: string) {
