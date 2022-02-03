@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "",
   "bin": {
-    "aflv": "dist/bin/aflv.js"
+    "aflv": "dist/bin/aflv.js",
+    "aflv-cc": "dist/bin/aflv-cc.js",
+    "aflv-cxx": "dist/bin/aflv-cxx.js"
   },
   "scripts": {
     "dev": "NODE_ENV=development nodemon src/server/index.ts",

@@ -190,7 +190,7 @@ function fuzz(argv: string[]) {
   serve({ targetDir, inputDir, outputDir });
 }
 
-async function main(argv: string[]) {
+export async function main(argv: string[]) {
   console.log(`aflv ${version}`);
 
   switch (argv[0]) {
@@ -213,7 +213,9 @@ async function main(argv: string[]) {
   }
 }
 
-main(process.argv.slice(2));
+if (require.main === module) {
+  main(process.argv.slice(2));
+}
 
 // function main(args: string[]) {
 //   const argv = yargs(args)
